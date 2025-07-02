@@ -30,3 +30,4 @@ coverage/
 # Optional: dotenv backups or secrets
 .env.*
 !.env.example
+.env
