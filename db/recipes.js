@@ -24,3 +24,13 @@ export async function getRecipeById(id) {
   if (error && error.code !== "PGRST116") throw error; // Let 404 be handled in caller
   return data;
 }
+
+export async function addRecipe(recipe) {
+  const { data, error } = await supabase
+    .from("recipes")
+    .insert(recipe)
+    .select();
+
+  if (error) throw error;
+  return data;
+}
