@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import recipeRoutes from "./routes/recipesRoutes.js";
 import { loggerMiddleware } from "./middlewares/logger.js";
+import breweriesRoutes from "./routes/breweriesRoutes.js";
 
 // Load env variables
 dotenv.config();
@@ -20,6 +21,7 @@ app.get("/", (_req, res) => {
   res.send("Hello from JavaScript server!");
 });
 app.use("/recipes", recipeRoutes);
+app.use("/breweries", breweriesRoutes);
 
 // Start server
 app.listen(PORT, () => {
