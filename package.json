@@ -8,10 +8,13 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
+    "@clerk/backend": "^2.4.0",
     "@supabase/supabase-js": "^2.50.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "multer": "^2.0.1",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
