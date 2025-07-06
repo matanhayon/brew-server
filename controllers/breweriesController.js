@@ -2,6 +2,7 @@ import {
   addBrewery,
   fetchBreweries,
   fetchBreweryById,
+  fetchBreweriesByUserId,
 } from "../services/breweriesService.js";
 
 export async function createBrewery(req, res) {
@@ -39,5 +40,21 @@ export async function getBreweryById(req, res) {
   } catch (err) {
     console.error("Error fetching brewery:", err.message);
     res.status(500).json({ error: "Failed to fetch brewery" });
+  }
+}
+
+export async function getBreweriesByUserId(req, res) {
+  const { user_id } = req.query;
+
+  if (!user_id) {
+    return res.status(400).json({ error: "Missing user_id in query" });
+  }
+
+  try {
+    const breweries = await fetchBreweriesByUserId(user_id);
+    res.json(breweries);
+  } catch (err) {
+    console.error("Error fetching user breweries:", err.message);
+    res.status(500).json({ error: "Failed to fetch user breweries" });
   }
 }

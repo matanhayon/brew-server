@@ -76,3 +76,20 @@ export async function fetchBreweryById(id) {
     brewery_members,
   };
 }
+
+export async function fetchBreweriesByUserId(user_id) {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("brewery_members")
+    .select("brewery_id, breweries(name)") // join breweries table
+    .eq("user_id", user_id);
+
+  if (error) throw error;
+
+  // Map to flat structure
+  return data.map((item) => ({
+    id: item.brewery_id,
+    name: item.breweries.name,
+  }));
+}
