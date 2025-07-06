@@ -82,14 +82,42 @@ export async function fetchBreweriesByUserId(user_id) {
 
   const { data, error } = await supabase
     .from("brewery_members")
-    .select("brewery_id, breweries(name)") // join breweries table
-    .eq("user_id", user_id);
+    .select("brewery_id, breweries(name), role, status")
+    .eq("user_id", user_id)
+    .in("status", ["approved", "pending"]);
 
   if (error) throw error;
 
-  // Map to flat structure
   return data.map((item) => ({
     id: item.brewery_id,
     name: item.breweries.name,
+    role: item.role,
+    status: item.status,
   }));
+}
+
+export async function insertJoinRequest(
+  { brewery_id, message, status = "pending" },
+  token
+) {
+  const supabase = getSupabaseClient(token);
+
+  // Insert into brewery_members without sending user_id explicitly
+  const { data, error } = await supabase
+    .from("brewery_members")
+    .insert({
+      brewery_id,
+      role: "viewer",
+      status,
+      request_message: message,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error inserting join request:", error);
+    throw error;
+  }
+
+  return data;
 }

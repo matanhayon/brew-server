@@ -3,6 +3,7 @@ import {
   fetchBreweries,
   fetchBreweryById,
   fetchBreweriesByUserId,
+  insertJoinRequest,
 } from "../services/breweriesService.js";
 
 export async function createBrewery(req, res) {
@@ -56,5 +57,28 @@ export async function getBreweriesByUserId(req, res) {
   } catch (err) {
     console.error("Error fetching user breweries:", err.message);
     res.status(500).json({ error: "Failed to fetch user breweries" });
+  }
+}
+
+export async function requestJoinBrewery(req, res) {
+  const { brewery_id, message, status } = req.body;
+
+  if (!brewery_id) {
+    return res.status(400).json({ error: "Missing brewery_id" });
+  }
+
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.replace("Bearer ", "");
+
+  try {
+    const joinRequest = await insertJoinRequest(
+      { brewery_id, message, status },
+      token
+    );
+
+    res.status(201).json(joinRequest);
+  } catch (err) {
+    console.error("Error inserting join request:", err.message);
+    res.status(500).json({ error: "Failed to send join request" });
   }
 }
