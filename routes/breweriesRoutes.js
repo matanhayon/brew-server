@@ -3,11 +3,15 @@ import {
   createBrewery,
   getAllBreweries,
   getBreweryById,
-  getBreweriesByUserId,
+  getAllBreweriesByUserId,
   requestJoinBrewery,
   getPendingJoinRequests,
   approveJoinRequestById,
   deleteJoinRequestById,
+  updateMemberRole,
+  deleteMember,
+  getApprovedBreweriesByUserId,
+  getPendingBreweriesByUserId,
 } from "../controllers/breweriesController.js";
 
 const router = express.Router();
@@ -18,7 +22,12 @@ router.get("/", getAllBreweries);
 router.post("/", createBrewery);
 router.post("/join", requestJoinBrewery);
 
-router.get("/membered/user", getBreweriesByUserId);
+router.get("/membered/user", getAllBreweriesByUserId);
+router.get("/membered/user/approved", getApprovedBreweriesByUserId);
+router.get("/membered/user/pending", getPendingBreweriesByUserId);
+
+router.patch("/members/:id/role", updateMemberRole);
+router.delete("/members/:id", deleteMember);
 
 // Brewery Requests:
 router.get("/join-requests", getPendingJoinRequests);
