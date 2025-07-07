@@ -36,6 +36,7 @@ export async function fetchBreweries() {
 export async function fetchBreweryById(id) {
   const supabase = getSupabaseClient();
 
+  // Select brewery with filtered brewery_members (role in ["admin","brewer"] and status = "approved")
   const { data, error } = await supabase
     .from("breweries")
     .select(
@@ -45,6 +46,7 @@ export async function fetchBreweryById(id) {
         id,
         user_id,
         role,
+        status,
         joined_at
       )
     `
@@ -54,9 +56,16 @@ export async function fetchBreweryById(id) {
 
   if (error) throw error;
 
-  // Enrich each member with their Clerk user info
+  // Filter members locally to only those with role admin or brewer and status approved
+  const filteredMembers = data.brewery_members.filter(
+    (member) =>
+      (member.role === "admin" || member.role === "brewer") &&
+      member.status === "approved"
+  );
+
+  // Enrich each filtered member with Clerk user info
   const brewery_members = await Promise.all(
-    data.brewery_members.map(async (member) => {
+    filteredMembers.map(async (member) => {
       const user = await getUserDetails(member.user_id);
       return {
         ...member,
@@ -67,10 +76,6 @@ export async function fetchBreweryById(id) {
     })
   );
 
-  console.log({
-    ...data,
-    brewery_members,
-  });
   return {
     ...data,
     brewery_members,
@@ -120,4 +125,53 @@ export async function insertJoinRequest(
   }
 
   return data;
+}
+
+export async function fetchPendingJoinRequests(brewery_id) {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("brewery_members")
+    .select("id, user_id, role, status, request_message, joined_at")
+    .eq("brewery_id", brewery_id)
+    .eq("status", "pending");
+
+  if (error) throw error;
+
+  // Optionally enrich with user details
+  const enriched = await Promise.all(
+    data.map(async (member) => {
+      const user = await getUserDetails(member.user_id);
+      return {
+        ...member,
+        user_name: user.name,
+        user_email: user.email,
+        user_image: user.imageUrl,
+      };
+    })
+  );
+
+  return enriched;
+}
+
+export async function approveJoinRequest(requestId) {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("brewery_members")
+    .update({ status: "approved", role: "brewer" })
+    .eq("id", requestId);
+  console.log(data);
+  if (error) throw error;
+}
+
+export async function deleteJoinRequest(requestId) {
+  const supabase = getSupabaseClient();
+
+  const { error } = await supabase
+    .from("brewery_members")
+    .delete()
+    .eq("id", requestId);
+
+  if (error) throw error;
 }
