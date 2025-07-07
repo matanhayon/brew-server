@@ -32,3 +32,30 @@ export async function fetchRecipeById(id) {
   if (error) throw error;
   return data;
 }
+
+export async function fetchRecipesByBreweryMembers(breweryId) {
+  const supabase = getSupabaseClient();
+
+  const { data: members, error: membersError } = await supabase
+    .from("brewery_members")
+    .select("user_id")
+    .eq("brewery_id", breweryId)
+    .eq("status", "approved");
+
+  if (membersError) throw membersError;
+
+  const userIds = members.map((m) => m.user_id);
+
+  if (userIds.length === 0) {
+    return []; // no members = no recipes
+  }
+
+  const { data: recipes, error: recipesError } = await supabase
+    .from("recipes")
+    .select("*")
+    .in("user_id", userIds);
+
+  if (recipesError) throw recipesError;
+
+  return recipes;
+}

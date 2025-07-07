@@ -2,6 +2,7 @@ import {
   addRecipe,
   fetchAllRecipes,
   fetchRecipeById,
+  fetchRecipesByBreweryMembers,
 } from "../services/recipesService.js";
 
 export async function getAllRecipes(req, res) {
@@ -39,5 +40,21 @@ export async function createRecipe(req, res) {
   } catch (err) {
     console.error("Error adding recipe:", err.message);
     res.status(500).json({ error: "Failed to add recipe" });
+  }
+}
+
+export async function getRecipesByBreweryMembers(req, res) {
+  const { brewery_id } = req.query;
+
+  if (!brewery_id) {
+    return res.status(400).json({ error: "Missing brewery_id" });
+  }
+
+  try {
+    const recipes = await fetchRecipesByBreweryMembers(brewery_id);
+    res.json(recipes);
+  } catch (err) {
+    console.error("Error fetching brewery members' recipes:", err.message);
+    res.status(500).json({ error: "Failed to fetch recipes" });
   }
 }
