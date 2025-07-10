@@ -2,7 +2,10 @@ import { fetchBrewsByBrewery } from "../services/brewsService.js";
 import { startBrew } from "../services/brewsService.js";
 import { logBrewTemperature } from "../services/brewsService.js";
 import { endBrew } from "../services/brewsService.js";
-
+import {
+  fetchBrewById,
+  fetchBrewTemperatureLogs,
+} from "../services/brewsService.js";
 export async function getBrewsByBrewery(req, res) {
   const { brewery_id } = req.query;
 
@@ -83,5 +86,91 @@ export async function endBrewSession(req, res) {
   } catch (err) {
     console.error("[endBrewSession] Error:", err.message);
     res.status(500).json({ error: "Failed to end brew session" });
+  }
+}
+
+export async function getBrewById(req, res) {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ error: "Missing brew id" });
+  }
+
+  try {
+    const brew = await fetchBrewById(id);
+    if (!brew) {
+      return res.status(404).json({ error: "Brew not found" });
+    }
+    res.json(brew);
+  } catch (err) {
+    console.error("[getBrewById] Error:", err.message);
+    res.status(500).json({ error: "Failed to fetch brew" });
+  }
+}
+
+export async function getBrewTemperatureLogs(req, res) {
+  const { brew_id } = req.query;
+
+  if (!brew_id) {
+    return res.status(400).json({ error: "Missing brew_id" });
+  }
+
+  try {
+    const logs = await fetchBrewTemperatureLogs(brew_id);
+    res.json(logs);
+  } catch (err) {
+    console.error("[getBrewTemperatureLogs] Error:", err.message);
+    res.status(500).json({ error: "Failed to fetch temperature logs" });
+  }
+}
+
+// In brewsController.js
+export async function connectEmbeddedBrewSession(req, res) {
+  const { brew_id, secret_key } = req.body;
+
+  if (!brew_id || !secret_key) {
+    return res.status(400).json({ error: "Missing brew_id or secret_key" });
+  }
+
+  try {
+    const supabase = getSupabaseClient();
+
+    // Check brew exists and key matches
+    const { data: brew, error } = await supabase
+      .from("brews")
+      .select("*")
+      .eq("id", brew_id)
+      .eq("secret_key", secret_key)
+      .single();
+
+    if (error || !brew) {
+      return res.status(403).json({ error: "Invalid brew_id or secret_key" });
+    }
+
+    // If it's pending, update to in_progress
+    if (brew.status === "pending") {
+      const { data: updatedBrew, error: updateError } = await supabase
+        .from("brews")
+        .update({ status: "in_progress" })
+        .eq("id", brew_id)
+        .select("*")
+        .single();
+
+      if (updateError) {
+        console.error(
+          "[connectEmbeddedBrewSession] Update error:",
+          updateError.message
+        );
+        return res.status(500).json({ error: "Failed to update brew status" });
+      }
+
+      return res.status(200).json(updatedBrew);
+    }
+
+    // Otherwise just return it
+    return res.status(200).json(brew);
+  } catch (err) {
+    console.error("[connectEmbeddedBrewSession] Error:", err.message);
+    res.status(500).json({ error: "Failed to connect to brew session" });
   }
 }

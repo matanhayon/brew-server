@@ -94,3 +94,37 @@ export async function endBrew({ brew_id, user_id }) {
 
   return data;
 }
+
+export async function fetchBrewById(id) {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("brews")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    console.error("[fetchBrewById] Supabase error:", error.message);
+    throw new Error("Failed to fetch brew");
+  }
+
+  return data;
+}
+
+export async function fetchBrewTemperatureLogs(brewId) {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("brew_temperature_logs")
+    .select("*")
+    .eq("brew_id", brewId)
+    .order("recorded_at", { ascending: true });
+
+  if (error) {
+    console.error("[fetchBrewTemperatureLogs] Supabase error:", error.message);
+    throw new Error("Failed to fetch temperature logs");
+  }
+
+  return data;
+}
