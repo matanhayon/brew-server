@@ -18,6 +18,6 @@ router.post("/temperature", logTemperature);
 router.post("/end", endBrewSession);
 router.get("/temperature_logs", getBrewTemperatureLogs);
 router.post("/connect", connectEmbeddedBrewSession);
-router.get("/:id", getBrewById);
+router.get("/watch/:id", getBrewById);
 
 export default router;
