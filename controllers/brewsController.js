@@ -53,9 +53,9 @@ export async function startBrewSession(req, res) {
 }
 
 export async function logTemperature(req, res) {
-  const { brew_id, brewery_id, user_id, temperature_celsius } = req.body;
+  const { brew_id, brewery_id, temperature_celsius } = req.body;
 
-  if (!brew_id || !brewery_id || !user_id || temperature_celsius == null) {
+  if (!brew_id || !brewery_id || temperature_celsius == null) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
@@ -63,7 +63,6 @@ export async function logTemperature(req, res) {
     await logBrewTemperature({
       brew_id,
       brewery_id,
-      user_id,
       temperature_celsius,
     });
     res.status(201).json({ message: "Temperature logged" });
@@ -151,7 +150,7 @@ export async function connectEmbeddedBrewSession(req, res) {
     if (brew.status === "pending") {
       const { data: updatedBrew, error: updateError } = await supabase
         .from("brews")
-        .update({ status: "in_progress" })
+        .update({ status: "started" })
         .eq("id", brew_id)
         .select("*")
         .single();
