@@ -6,6 +6,9 @@ import {
   fetchBrewById,
   fetchBrewTemperatureLogs,
 } from "../services/brewsService.js";
+
+import { getSupabaseClient } from "../services/supabaseClient.js";
+
 export async function getBrewsByBrewery(req, res) {
   const { brewery_id } = req.query;
 
