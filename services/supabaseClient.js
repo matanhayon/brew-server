@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-export function getSupabaseClient(token) {
+export function getSupabaseClient(token = null) {
   const { SUPABASE_URL, SUPABASE_KEY } = process.env;
 
   if (!SUPABASE_URL || !SUPABASE_KEY) {
@@ -12,11 +12,7 @@ export function getSupabaseClient(token) {
 
   return createClient(SUPABASE_URL, SUPABASE_KEY, {
     global: {
-      fetch: async (url, options = {}) => {
-        const headers = new Headers(options?.headers);
-        if (token) headers.set("Authorization", `Bearer ${token}`);
-        return fetch(url, { ...options, headers });
-      },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     },
   });
 }

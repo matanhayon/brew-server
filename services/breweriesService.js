@@ -18,6 +18,7 @@ export async function addBrewery(breweryData, token) {
   const { error: memberError } = await supabase.from("brewery_members").insert({
     brewery_id: brewery.id,
     role: "admin",
+    status: "approved",
   });
 
   if (memberError) throw memberError;

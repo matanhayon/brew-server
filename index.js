@@ -5,6 +5,7 @@ import recipeRoutes from "./routes/recipesRoutes.js";
 import { loggerMiddleware } from "./middlewares/logger.js";
 import breweriesRoutes from "./routes/breweriesRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
+import devicesRoutes from "./routes/devicesRoutes.js";
 
 // Load env variables
 dotenv.config();
@@ -25,10 +26,9 @@ app.get("/", (_req, res) => {
 app.use("/recipes", recipeRoutes);
 app.use("/breweries", breweriesRoutes);
 app.use("/upload", uploadRoutes);
+app.use("/devices", devicesRoutes);
 
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
-
-// Add this line after other route uses
