@@ -125,6 +125,10 @@ export async function getBrewTemperatureLogs(req, res) {
 
 // In brewsController.js
 export async function connectEmbeddedBrewSession(req, res) {
+  if (!req.body) {
+    return res.status(400).json({ error: "Missing request body" });
+  }
+
   const { brew_id, secret_key } = req.body;
 
   if (!brew_id || !secret_key) {
