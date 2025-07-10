@@ -16,3 +16,81 @@ export async function fetchBrewsByBrewery(breweryId) {
 
   return data;
 }
+
+export async function startBrew({
+  brewery_id,
+  user_id,
+  recipe_id,
+  recipe_snapshot,
+  secret_key,
+}) {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("brews")
+    .insert([
+      {
+        brewery_id,
+        user_id,
+        recipe_id,
+        recipe_snapshot,
+        secret_key,
+        status: "pending",
+      },
+    ])
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("[startBrew] Supabase error:", error.message);
+    throw new Error("Failed to start brew session");
+  }
+
+  return data;
+}
+
+export async function logBrewTemperature({
+  brew_id,
+  brewery_id,
+  user_id,
+  temperature_celsius,
+}) {
+  const supabase = getSupabaseClient();
+
+  const { error } = await supabase.from("brew_temperature_logs").insert([
+    {
+      brew_id,
+      brewery_id,
+      user_id,
+      temperature_celsius,
+      recorded_at: new Date().toISOString(), // optional, you can omit if Supabase handles this
+    },
+  ]);
+
+  if (error) {
+    console.error("[logBrewTemperature] Supabase error:", error.message);
+    throw new Error("Failed to log temperature");
+  }
+}
+
+export async function endBrew({ brew_id, user_id }) {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("brews")
+    .update({
+      status: "completed",
+      ended_at: new Date().toISOString(),
+    })
+    .eq("id", brew_id)
+    .eq("user_id", user_id)
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("[endBrew] Supabase error:", error.message);
+    throw new Error("Failed to end brew session");
+  }
+
+  return data;
+}

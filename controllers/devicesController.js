@@ -61,3 +61,19 @@ export async function removeDevice(req, res) {
     res.status(500).json({ error: "Failed to delete device" });
   }
 }
+
+export async function deviceHeartbeat(req, res) {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ error: "Missing device ID" });
+  }
+
+  try {
+    const updated = await updateDeviceStatus(id, "online");
+    res.status(200).json({ message: "Heartbeat received", device: updated });
+  } catch (err) {
+    console.error("Heartbeat failed:", err.message);
+    res.status(500).json({ error: "Failed to update device status" });
+  }
+}
