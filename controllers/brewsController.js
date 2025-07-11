@@ -191,31 +191,36 @@ export async function embeddedStartBrewSession(req, res) {
   try {
     const supabase = getSupabaseClient();
 
-    // Step 1: Find the existing brew
-    const { data: existingBrew, error: fetchError } = await supabase
+    // Step 1: Find matching brews
+    const { data: brews, error: fetchError } = await supabase
       .from("brews")
       .select("*")
       .eq("brewery_id", brewery_id)
       .eq("recipe_id", recipe_id)
       .eq("secret_key", secret_key)
       .eq("status", "pending")
-      .order("created_at", { ascending: false }) // In case of duplicates, pick latest
-      .limit(1)
-      .single();
+      .order("created_at", { ascending: false })
+      .limit(5); // just in case there are multiple
 
-    if (fetchError || !existingBrew) {
+    if (fetchError) {
       console.error(
         "[embeddedStartBrewSession] Fetch error:",
-        fetchError?.message
+        fetchError.message
       );
+      return res.status(500).json({ error: "Failed to fetch brew" });
+    }
+
+    if (!brews || brews.length === 0) {
       return res.status(404).json({ error: "Pending brew not found" });
     }
 
-    // Step 2: Update status to "started"
+    // Step 2: Update the most recent pending brew
+    const latestBrew = brews[0];
+
     const { data: updatedBrew, error: updateError } = await supabase
       .from("brews")
       .update({ status: "started" })
-      .eq("id", existingBrew.id)
+      .eq("id", latestBrew.id)
       .select("*")
       .single();
 
