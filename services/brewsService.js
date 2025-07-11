@@ -53,7 +53,6 @@ export async function startBrew({
 export async function logBrewTemperature({
   brew_id,
   brewery_id,
-  user_id,
   temperature_celsius,
 }) {
   const supabase = getSupabaseClient();
@@ -62,7 +61,6 @@ export async function logBrewTemperature({
     {
       brew_id,
       brewery_id,
-      user_id,
       temperature_celsius,
       recorded_at: new Date().toISOString(), // optional, you can omit if Supabase handles this
     },
