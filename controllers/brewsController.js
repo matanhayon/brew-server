@@ -307,15 +307,30 @@ export async function updateStepStatus(req, res) {
       return res.status(403).json({ error: "Invalid brew_id or secret_key" });
     }
 
-    // Prepare dynamic update
+    // Build dynamic update
     const updatePayload = {
       [status_field]: status_value,
     };
 
-    // Optionally log timestamp
-    if (timestamp) {
-      updatePayload[`${status_field}_timestamp`] = timestamp;
+    // Timestamp mapping
+    const timestampMap = {
+      mash_status: {
+        started: "mash_start",
+        ended: "mash_end",
+      },
+      boil_status: {
+        started: "boil_start",
+        ended: "boil_end",
+      },
+    };
+
+    if (timestamp && timestampMap[status_field]?.[status_value]) {
+      const tsField = timestampMap[status_field][status_value];
+      updatePayload[tsField] = timestamp;
     }
+
+    // DEBUG: Optional logging for troubleshooting
+    console.log("[updateStepStatus] Update payload:", updatePayload);
 
     const { data: updatedBrew, error: updateError } = await supabase
       .from("brews")
