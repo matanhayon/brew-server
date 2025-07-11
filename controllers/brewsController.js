@@ -68,7 +68,28 @@ export async function logTemperature(req, res) {
       brewery_id,
       temperature_celsius,
     });
-    res.status(201).json({ message: "Temperature logged" });
+
+    const supabase = getSupabaseClient();
+    const { data: brew, error } = await supabase
+      .from("brews")
+      .select("status")
+      .eq("id", brew_id)
+      .single();
+
+    if (error || !brew) {
+      console.warn(
+        "[logTemperature] Temperature logged, but failed to fetch brew status."
+      );
+      return res.status(201).json({
+        message: "Temperature logged",
+        brew_status: null,
+      });
+    }
+
+    return res.status(201).json({
+      message: "Temperature logged",
+      brew_status: brew.status,
+    });
   } catch (err) {
     console.error("[logTemperature] Error:", err.message);
     res.status(500).json({ error: "Failed to log temperature" });
@@ -76,14 +97,14 @@ export async function logTemperature(req, res) {
 }
 
 export async function endBrewSession(req, res) {
-  const { brew_id, user_id } = req.body;
+  const { brew_id } = req.body;
 
-  if (!brew_id || !user_id) {
+  if (!brew_id) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
   try {
-    const endedBrew = await endBrew({ brew_id, user_id });
+    const endedBrew = await endBrew({ brew_id });
     res.status(200).json(endedBrew);
   } catch (err) {
     console.error("[endBrewSession] Error:", err.message);

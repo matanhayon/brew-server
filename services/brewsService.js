@@ -72,7 +72,7 @@ export async function logBrewTemperature({
   }
 }
 
-export async function endBrew({ brew_id, user_id }) {
+export async function endBrew({ brew_id }) {
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase
@@ -82,7 +82,6 @@ export async function endBrew({ brew_id, user_id }) {
       ended_at: new Date().toISOString(),
     })
     .eq("id", brew_id)
-    .eq("user_id", user_id)
     .select("*")
     .single();
 

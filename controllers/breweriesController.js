@@ -92,7 +92,6 @@ export async function requestJoinBrewery(req, res) {
 
 export async function getPendingJoinRequests(req, res) {
   const { brewery_id } = req.query;
-  console.log(brewery_id);
   if (!brewery_id) {
     return res.status(400).json({ error: "Missing brewery_id" });
   }
