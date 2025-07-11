@@ -182,16 +182,24 @@ export async function connectEmbeddedBrewSession(req, res) {
 }
 
 export async function embeddedStartBrewSession(req, res) {
+  console.log("[embeddedStartBrewSession] Incoming request body:", req.body);
+
   const { brew_id, secret_key } = req.body;
 
   if (!brew_id || !secret_key) {
+    console.warn("[embeddedStartBrewSession] Missing required fields:", {
+      brew_id,
+      secret_key,
+    });
     return res.status(400).json({ error: "Missing required fields" });
   }
 
   try {
     const supabase = getSupabaseClient();
 
-    // Step 1: Find the brew by ID
+    console.log(
+      `[embeddedStartBrewSession] Fetching brew with id=${brew_id} and secret_key=${secret_key}`
+    );
     const { data: brew, error: fetchError } = await supabase
       .from("brews")
       .select("*")
@@ -201,17 +209,24 @@ export async function embeddedStartBrewSession(req, res) {
 
     if (fetchError || !brew) {
       console.error(
-        "[embeddedStartBrewSession] Fetch error:",
+        "[embeddedStartBrewSession] Fetch error or no brew found:",
         fetchError?.message || "Not found"
       );
       return res.status(404).json({ error: "Brew not found or unauthorized" });
     }
 
+    console.log("[embeddedStartBrewSession] Brew fetched:", brew);
+
     if (brew.status !== "pending") {
+      console.warn(
+        `[embeddedStartBrewSession] Brew status is '${brew.status}', expected 'pending'`
+      );
       return res.status(400).json({ error: "Brew is not in 'pending' status" });
     }
 
-    // Step 2: Update status to "started"
+    console.log(
+      `[embeddedStartBrewSession] Updating brew id=${brew.id} status to 'started'`
+    );
     const { data: updatedBrew, error: updateError } = await supabase
       .from("brews")
       .update({ status: "started" })
@@ -227,9 +242,13 @@ export async function embeddedStartBrewSession(req, res) {
       return res.status(500).json({ error: "Failed to update brew status" });
     }
 
+    console.log(
+      "[embeddedStartBrewSession] Brew status updated successfully:",
+      updatedBrew
+    );
     res.status(200).json(updatedBrew);
   } catch (err) {
-    console.error("[embeddedStartBrewSession] Error:", err.message);
+    console.error("[embeddedStartBrewSession] Exception caught:", err.message);
     res.status(500).json({ error: "Failed to start embedded brew" });
   }
 }
