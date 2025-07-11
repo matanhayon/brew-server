@@ -217,36 +217,46 @@ export async function embeddedStartBrewSession(req, res) {
 
     console.log("[embeddedStartBrewSession] Brew fetched:", brew);
 
-    if (brew.status !== "pending") {
-      console.warn(
-        `[embeddedStartBrewSession] Brew status is '${brew.status}', expected 'pending'`
+    if (brew.status === "pending") {
+      console.log(
+        `[embeddedStartBrewSession] Brew status is 'pending'. Updating brew id=${brew.id} status to 'started'`
       );
-      return res.status(400).json({ error: "Brew is not in 'pending' status" });
+      const { data: updatedBrew, error: updateError } = await supabase
+        .from("brews")
+        .update({ status: "started" })
+        .eq("id", brew.id)
+        .select("*")
+        .single();
+
+      if (updateError) {
+        console.error(
+          "[embeddedStartBrewSession] Update error:",
+          updateError.message
+        );
+        return res.status(500).json({ error: "Failed to update brew status" });
+      }
+
+      console.log(
+        "[embeddedStartBrewSession] Brew status updated successfully:",
+        updatedBrew
+      );
+      return res.status(200).json(updatedBrew);
     }
 
-    console.log(
-      `[embeddedStartBrewSession] Updating brew id=${brew.id} status to 'started'`
-    );
-    const { data: updatedBrew, error: updateError } = await supabase
-      .from("brews")
-      .update({ status: "started" })
-      .eq("id", brew.id)
-      .select("*")
-      .single();
-
-    if (updateError) {
-      console.error(
-        "[embeddedStartBrewSession] Update error:",
-        updateError.message
+    if (brew.status === "started") {
+      console.log(
+        `[embeddedStartBrewSession] Brew status is already 'started'. Returning existing brew.`
       );
-      return res.status(500).json({ error: "Failed to update brew status" });
+      return res.status(200).json(brew);
     }
 
-    console.log(
-      "[embeddedStartBrewSession] Brew status updated successfully:",
-      updatedBrew
+    // If brew.status is neither pending nor started
+    console.warn(
+      `[embeddedStartBrewSession] Brew status is '${brew.status}', expected 'pending' or 'started'`
     );
-    res.status(200).json(updatedBrew);
+    return res
+      .status(400)
+      .json({ error: "Brew is not in 'pending' or 'started' status" });
   } catch (err) {
     console.error("[embeddedStartBrewSession] Exception caught:", err.message);
     res.status(500).json({ error: "Failed to start embedded brew" });
