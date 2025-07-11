@@ -7,6 +7,7 @@ import {
   endBrewSession,
   getBrewById,
   getBrewTemperatureLogs,
+  embeddedStartBrewSession,
 } from "../controllers/brewsController.js";
 import { connectEmbeddedBrewSession } from "../controllers/brewsController.js";
 
@@ -19,5 +20,6 @@ router.post("/end", endBrewSession);
 router.get("/temperature_logs", getBrewTemperatureLogs);
 router.post("/connect", connectEmbeddedBrewSession);
 router.get("/watch/:id", getBrewById);
+router.post("/embedded_start", embeddedStartBrewSession);
 
 export default router;

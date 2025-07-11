@@ -22,6 +22,7 @@ export async function startBrew({
   user_id,
   recipe_id,
   recipe_snapshot,
+  brew_status,
   secret_key,
 }) {
   const supabase = getSupabaseClient();
@@ -35,7 +36,7 @@ export async function startBrew({
         recipe_id,
         recipe_snapshot,
         secret_key,
-        status: "pending",
+        status: brew_status || "pending",
       },
     ])
     .select("*")

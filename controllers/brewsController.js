@@ -180,3 +180,56 @@ export async function connectEmbeddedBrewSession(req, res) {
     res.status(500).json({ error: "Failed to connect to brew session" });
   }
 }
+
+export async function embeddedStartBrewSession(req, res) {
+  const { brewery_id, recipe_id, recipe_snapshot, secret_key } = req.body;
+
+  if (!brewery_id || !recipe_id || !recipe_snapshot || !secret_key) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  try {
+    const supabase = getSupabaseClient();
+
+    // Step 1: Find the existing brew
+    const { data: existingBrew, error: fetchError } = await supabase
+      .from("brews")
+      .select("*")
+      .eq("brewery_id", brewery_id)
+      .eq("recipe_id", recipe_id)
+      .eq("secret_key", secret_key)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false }) // In case of duplicates, pick latest
+      .limit(1)
+      .single();
+
+    if (fetchError || !existingBrew) {
+      console.error(
+        "[embeddedStartBrewSession] Fetch error:",
+        fetchError?.message
+      );
+      return res.status(404).json({ error: "Pending brew not found" });
+    }
+
+    // Step 2: Update status to "started"
+    const { data: updatedBrew, error: updateError } = await supabase
+      .from("brews")
+      .update({ status: "started" })
+      .eq("id", existingBrew.id)
+      .select("*")
+      .single();
+
+    if (updateError) {
+      console.error(
+        "[embeddedStartBrewSession] Update error:",
+        updateError.message
+      );
+      return res.status(500).json({ error: "Failed to update brew status" });
+    }
+
+    res.status(200).json(updatedBrew);
+  } catch (err) {
+    console.error("[embeddedStartBrewSession] Error:", err.message);
+    res.status(500).json({ error: "Failed to start embedded brew" });
+  }
+}
