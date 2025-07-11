@@ -182,45 +182,40 @@ export async function connectEmbeddedBrewSession(req, res) {
 }
 
 export async function embeddedStartBrewSession(req, res) {
-  const { brewery_id, recipe_id, recipe_snapshot, secret_key } = req.body;
+  const { brew_id, secret_key } = req.body;
 
-  if (!brewery_id || !recipe_id || !recipe_snapshot || !secret_key) {
+  if (!brew_id || !secret_key) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
   try {
     const supabase = getSupabaseClient();
 
-    // Step 1: Find matching brews
-    const { data: brews, error: fetchError } = await supabase
+    // Step 1: Find the brew by ID
+    const { data: brew, error: fetchError } = await supabase
       .from("brews")
       .select("*")
-      .eq("brewery_id", brewery_id)
-      .eq("recipe_id", recipe_id)
+      .eq("id", brew_id)
       .eq("secret_key", secret_key)
-      .eq("status", "pending")
-      .order("created_at", { ascending: false })
-      .limit(5); // just in case there are multiple
+      .single();
 
-    if (fetchError) {
+    if (fetchError || !brew) {
       console.error(
         "[embeddedStartBrewSession] Fetch error:",
-        fetchError.message
+        fetchError?.message || "Not found"
       );
-      return res.status(500).json({ error: "Failed to fetch brew" });
+      return res.status(404).json({ error: "Brew not found or unauthorized" });
     }
 
-    if (!brews || brews.length === 0) {
-      return res.status(404).json({ error: "Pending brew not found" });
+    if (brew.status !== "pending") {
+      return res.status(400).json({ error: "Brew is not in 'pending' status" });
     }
 
-    // Step 2: Update the most recent pending brew
-    const latestBrew = brews[0];
-
+    // Step 2: Update status to "started"
     const { data: updatedBrew, error: updateError } = await supabase
       .from("brews")
       .update({ status: "started" })
-      .eq("id", latestBrew.id)
+      .eq("id", brew.id)
       .select("*")
       .single();
 
