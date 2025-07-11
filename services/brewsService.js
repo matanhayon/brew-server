@@ -78,7 +78,7 @@ export async function endBrew({ brew_id }) {
   const { data, error } = await supabase
     .from("brews")
     .update({
-      status: "completed",
+      status: "ended",
       ended_at: new Date().toISOString(),
     })
     .eq("id", brew_id)
