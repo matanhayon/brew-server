@@ -262,3 +262,58 @@ export async function embeddedStartBrewSession(req, res) {
     res.status(500).json({ error: "Failed to start embedded brew" });
   }
 }
+
+export async function updateStepStatus(req, res) {
+  const { brew_id, secret_key, status_field, status_value, timestamp } =
+    req.body;
+
+  if (!brew_id || !secret_key || !status_field || status_value === undefined) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  try {
+    const supabase = getSupabaseClient();
+
+    // Authenticate brew
+    const { data: brew, error: authError } = await supabase
+      .from("brews")
+      .select("*")
+      .eq("id", brew_id)
+      .eq("secret_key", secret_key)
+      .single();
+
+    if (authError || !brew) {
+      return res.status(403).json({ error: "Invalid brew_id or secret_key" });
+    }
+
+    // Prepare dynamic update
+    const updatePayload = {
+      [status_field]: status_value,
+    };
+
+    // Optionally log timestamp
+    if (timestamp) {
+      updatePayload[`${status_field}_timestamp`] = timestamp;
+    }
+
+    const { data: updatedBrew, error: updateError } = await supabase
+      .from("brews")
+      .update(updatePayload)
+      .eq("id", brew_id)
+      .select("*")
+      .single();
+
+    if (updateError) {
+      console.error(
+        "[updateStepStatus] Supabase update error:",
+        updateError.message
+      );
+      return res.status(500).json({ error: "Failed to update step status" });
+    }
+
+    return res.status(200).json(updatedBrew);
+  } catch (err) {
+    console.error("[updateStepStatus] Error:", err.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
